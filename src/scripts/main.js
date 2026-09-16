@@ -6,6 +6,7 @@ const game = new Game();
 
 // Write your code here
 const startButton = document.querySelector('.start');
+const undoButton = document.querySelector('.undo-button');
 const allDomCells = document.querySelectorAll('.field-cell');
 const scoreElement = document.querySelector('.game-score');
 const startMessage = document.querySelector('.message-start');
@@ -37,15 +38,39 @@ function updateScore(score) {
   scoreElement.textContent = score;
 }
 
-function renderField(elements) {
+function renderField(elements, animateNewTiles = false) {
   const cellsValue = game.getState().flat();
 
   cellsValue.forEach((cell, index) => {
+    const previousCell = elements[index].textContent;
+    const isNewTile = animateNewTiles && cell !== 0 && previousCell === '';
+
     elements[index].textContent = cell === 0 ? '' : cell;
+    // Update the CSS classes for each cell based on its value
+    elements[index].className = `field-cell field-cell--${cell}`;
+
+    if (isNewTile) {
+      elements[index].classList.add('tile-appear');
+    }
   });
 }
 
+undoButton.addEventListener('click', () => {
+  game.undo();
+  updateUI(false);
+});
+
+function updateUndoButtonState() {
+  if (game.canUndo()) {
+    undoButton.removeAttribute('disabled');
+  } else {
+    undoButton.setAttribute('disabled', true);
+  }
+}
+
 startButton.addEventListener('click', () => {
+  const isStartingGame = !startButton.classList.contains('restart');
+
   if (startButton.classList.contains('restart')) {
     game.restart();
     startButton.classList.remove('restart');
@@ -54,9 +79,7 @@ startButton.addEventListener('click', () => {
     game.start();
   }
 
-  renderField(allDomCells);
-  updateScore(game.getScore());
-  updateMessage();
+  updateUI(isStartingGame);
 
   if (game.getStatus() === 'playing') {
     startButton.classList.add('restart');
@@ -86,7 +109,12 @@ document.addEventListener('keydown', (ev) => {
       break;
   }
 
-  renderField(allDomCells);
-  updateScore(game.getScore());
-  updateMessage();
+  updateUI(true);
 });
+
+function updateUI(animateNewTiles = false) {
+  renderField(allDomCells, animateNewTiles);
+  updateScore(game.getScore());
+  updateUndoButtonState();
+  updateMessage();
+}

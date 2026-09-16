@@ -1,5 +1,7 @@
 'use strict';
 
+const BOARD_SIZE = 4;
+
 /**
  * This class represents the game.
  * Now it has a basic structure, that is needed for testing.
@@ -22,15 +24,13 @@ class Game {
    */
   constructor(initialState = []) {
     if (initialState.length === 0) {
-      this.field = [
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-      ];
+      const emptyRow = Array(BOARD_SIZE).fill(0);
+
+      this.field = Array.from({ length: BOARD_SIZE }, () => [...emptyRow]);
     } else {
       this.field = structuredClone(initialState);
     }
+    this.previousState = null;
 
     this.startField = structuredClone(this.field);
 
@@ -173,7 +173,7 @@ class Game {
 
     newRow = newRow.filter((cell) => cell !== 0);
 
-    while (newRow.length < 4) {
+    while (newRow.length < BOARD_SIZE) {
       newRow.push(0);
     }
 
@@ -183,7 +183,7 @@ class Game {
   transposeField(field) {
     const result = [];
 
-    for (let col = 0; col < 4; col++) {
+    for (let col = 0; col < BOARD_SIZE; col++) {
       const column = [];
 
       field.forEach((row) => {
@@ -210,6 +210,11 @@ class Game {
       if (this.status !== 'playing') {
         return;
       }
+
+      this.previousState = {
+        field: structuredClone(this.field),
+        score: this.score,
+      };
 
       this.field = newField;
 
@@ -244,6 +249,18 @@ class Game {
     if (!result && this.field.every((row) => row.every((cell) => cell !== 0))) {
       this.status = 'lose';
     }
+  }
+
+  undo() {
+    if (this.previousState && this.status === 'playing') {
+      this.field = structuredClone(this.previousState.field);
+      this.score = this.previousState.score;
+      this.previousState = null;
+    }
+  }
+
+  canUndo() {
+    return this.previousState !== null && this.status === 'playing';
   }
 }
 
