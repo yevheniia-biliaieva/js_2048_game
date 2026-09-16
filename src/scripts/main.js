@@ -107,6 +107,8 @@ document.addEventListener('keydown', (ev) => {
     case 'ArrowRight':
       game.moveRight();
       break;
+    default:
+      return;
   }
 
   updateUI(true);
